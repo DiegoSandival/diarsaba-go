@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>diarsaba compact</title>
+  <style>
+    :root {
+      --bg: #f3f2ed;
+      --panel: #fbfaf5;
+      --line: #d8d5c8;
+      --text: #151515;
+      --muted: #6a685f;
+      --soft: #f0eee3;
+      --ink: #111111;
+      --ok: #1f7a3a;
+      --warn: #8a5d00;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.4 var(--sans);
+    }
+
+    .layout {
+      width: min(1440px, calc(100vw - 24px));
+      margin: 12px auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .main,
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .hero,
+    .section,
+    .stream {
+      padding: 14px;
+    }
+
+    .side {
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    pre {
+      margin: 0;
+    }
+
+    .hero {
+      display: grid;
+      gap: 8px;
+    }
+
+    .hero h1,
+    .section h2,
+    .card h3,
+    .stream h2 {
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+
+    .meta-row,
+    .status {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 4px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #8f8d85;
+    }
+
+    .dot.on {
+      background: var(--ok);
+    }
+
+    .section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .opcode {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .fields {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row-2,
+    .row-3 {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .row-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    label,
+    .label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+      font-family: var(--mono);
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 9px;
+      background: #fff;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--soft);
+    }
+
+    .checks label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--text);
+      font-size: 12px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .checks input {
+      width: auto;
+      margin: 0;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 12px/1.45 var(--mono);
+    }
+
+    .snippet,
+    .hexbox,
+    .entry {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--soft);
+      padding: 10px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: var(--ink);
+      color: #fff;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button.secondary {
+      background: #e7e2cf;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .stream {
+      display: grid;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .stream-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .entries {
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+      min-height: 0;
+      padding-right: 2px;
+    }
+
+    .entry-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .entry strong {
+      color: var(--text);
+      font-size: 12px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .entry .parsed {
+      margin-top: 8px;
+    }
+
+    .ok {
+      color: var(--ok);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .layout {
+        width: calc(100vw - 12px);
+        margin: 6px auto;
+      }
+
+      .cards,
+      .row-2,
+      .row-3,
+      .checks {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <main class="main">
+      <section class="panel hero">
+        <h1>diarsaba compact</h1>
+        <p>Interfaz compacta. Cada operación se arma como snippet, envía bytes puros y deja la respuesta parseada al costado.</p>
+        <div class="status">
+          <span class="tag"><span id="socket-dot" class="dot"></span><span id="socket-state">desconectado</span></span>
+          <span class="tag">ruta: /compact/</span>
+          <span class="tag">ws: /ws</span>
+          <span class="tag">peer: <span id="peer-id">-</span></span>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <h2>samsara</h2>
+        <div id="samsara-cards" class="cards"></div>
+      </section>
+
+      <section class="panel section">
+        <h2>synap2p</h2>
+        <div id="synap-cards" class="cards"></div>
+      </section>
+    </main>
+
+    <aside class="side">
+      <section class="panel stream">
+        <div class="stream-head">
+          <h2>stream</h2>
+          <button id="clear-stream" type="button" class="secondary">clear</button>
+        </div>
+        <div id="entries" class="entries"></div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const FRAME_CONTROL = 0x7f;
+
+    const CTRL_WELCOME = 0x01;
+    const CTRL_ADDR = 0x02;
+    const CTRL_LOG = 0x03;
+    const CTRL_ERROR = 0x04;
+
+    const OP = {
+      RELAY: 0x00,
+      DIAL: 0x01,
+      SUB: 0x02,
+      USE: 0x03,
+      PUB: 0x04,
+      PEERS: 0x05,
+      UNSUB: 0x06,
+      ANNOUNCE: 0x07,
+      UNANNOUNCE: 0x08,
+      FIND_PROVIDERS: 0x09,
+      DIRECT_MSG: 0x0a,
+      DISCONNECT: 0x0b,
+      GENERATE_CID: 0x0c,
+      EVENT_PUBSUB: 0x0d,
+      EVENT_DIRECT_MSG: 0x0e,
+      EVENT_PEER_FOUND: 0x0f,
+      CREATE_DB: 0x20,
+      DELETE_DB: 0x21,
+      WRITE: 0x22,
+      READ: 0x23,
+      READ_FREE: 0x24,
+      DELETE: 0x25,
+      READ_CELL: 0x26,
+      DIFERIR: 0x27,
+      CRUZAR: 0x28
+    };
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const socketDot = document.getElementById("socket-dot");
+    const socketState = document.getElementById("socket-state");
+    const peerId = document.getElementById("peer-id");
+    const entries = document.getElementById("entries");
+    const samsaraCards = document.getElementById("samsara-cards");
+    const synapCards = document.getElementById("synap-cards");
+
+    let socket = null;
+
+    const genomeFlags = [
+      ["ReadSelf", 0],
+      ["ReadNeighbors", 1],
+      ["WriteSelf", 2],
+      ["WriteNeighbors", 3],
+      ["DeleteSelf", 4],
+      ["DeleteNeighbors", 5],
+      ["DiferirSelf", 6],
+      ["CruzarSelf", 7],
+      ["DominanceSelf", 8],
+      ["FreeRead", 9],
+      ["IsMigrated", 10]
+    ];
+
+    const defaultGenome = {
+      ReadSelf: true,
+      ReadNeighbors: true,
+      WriteSelf: true,
+      WriteNeighbors: true,
+      DeleteSelf: true,
+      DeleteNeighbors: true,
+      DiferirSelf: true,
+      CruzarSelf: true,
+      DominanceSelf: true,
+      FreeRead: true,
+      IsMigrated: false
+    };
+
+    function randomBytes(length) {
+      const out = new Uint8Array(length);
+      crypto.getRandomValues(out);
+      return out;
+    }
+
+    function textBytes(value) {
+      return encoder.encode(value || "");
+    }
+
+    function readU32(bytes, offset) {
+      return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, false);
+    }
+
+    function u16(value) {
+      const out = new Uint8Array(2);
+      new DataView(out.buffer).setUint16(0, Number(value) >>> 0, false);
+      return out;
+    }
+
+    function u32(value) {
+      const out = new Uint8Array(4);
+      new DataView(out.buffer).setUint32(0, Number(value) >>> 0, false);
+      return out;
+    }
+
+    function concat(...parts) {
+      const total = parts.reduce((sum, part) => sum + part.length, 0);
+      const out = new Uint8Array(total);
+      let offset = 0;
+      for (const part of parts) {
+        out.set(part, offset);
+        offset += part.length;
+      }
+      return out;
+    }
+
+    function hex(bytes) {
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(" ");
+    }
+
+    function shortHex(bytes) {
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    function quoted(value) {
+      return JSON.stringify(value || "");
+    }
+
+    function setSocket(online) {
+      socketDot.className = online ? "dot on" : "dot";
+      socketState.textContent = online ? "conectado" : "desconectado";
+    }
+
+    function opcodeName(opcode) {
+      const names = {
+        [OP.RELAY]: "RELAY",
+        [OP.DIAL]: "DIAL",
+        [OP.SUB]: "SUB",
+        [OP.USE]: "USE",
+        [OP.PUB]: "PUB",
+        [OP.PEERS]: "PEERS",
+        [OP.UNSUB]: "UNSUB",
+        [OP.ANNOUNCE]: "ANNOUNCE",
+        [OP.UNANNOUNCE]: "UNANNOUNCE",
+        [OP.FIND_PROVIDERS]: "FIND_PROVIDERS",
+        [OP.DIRECT_MSG]: "DIRECT_MSG",
+        [OP.DISCONNECT]: "DISCONNECT",
+        [OP.GENERATE_CID]: "GENERATE_CID",
+        [OP.EVENT_PUBSUB]: "EVENT_PUBSUB",
+        [OP.EVENT_DIRECT_MSG]: "EVENT_DIRECT_MSG",
+        [OP.EVENT_PEER_FOUND]: "EVENT_PEER_FOUND",
+        [OP.CREATE_DB]: "CREATE_DB",
+        [OP.DELETE_DB]: "DELETE_DB",
+        [OP.WRITE]: "WRITE",
+        [OP.READ]: "READ",
+        [OP.READ_FREE]: "READ_FREE",
+        [OP.DELETE]: "DELETE",
+        [OP.READ_CELL]: "READ_CELL",
+        [OP.DIFERIR]: "DIFERIR",
+        [OP.CRUZAR]: "CRUZAR"
+      };
+      return names[opcode] || ("0x" + opcode.toString(16).padStart(2, "0"));
+    }
+
+    function addEntry(kind, title, parsed, bytes) {
+      const article = document.createElement("article");
+      article.className = "entry";
+
+      const head = document.createElement("div");
+      head.className = "entry-title";
+      const left = document.createElement("strong");
+      left.textContent = kind + " | " + title;
+      const right = document.createElement("span");
+      right.textContent = new Date().toLocaleTimeString();
+      head.append(left, right);
+
+      const parsedBox = document.createElement("pre");
+      parsedBox.className = "parsed";
+      parsedBox.textContent = parsed;
+
+      const rawBox = document.createElement("pre");
+      rawBox.textContent = "raw\n" + (bytes ? hex(bytes) : "-");
+
+      article.append(head, parsedBox, rawBox);
+      entries.prepend(article);
+    }
+
+    function clearEntries() {
+      entries.innerHTML = "";
+    }
+
+    function connect() {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(protocol + "://" + window.location.host + "/ws");
+      socket.binaryType = "arraybuffer";
+
+      socket.addEventListener("open", () => {
+        setSocket(true);
+        addEntry("local", "socket", "open", null);
+      });
+
+      socket.addEventListener("close", () => {
+        setSocket(false);
+        addEntry("local", "socket", "close", null);
+        window.setTimeout(connect, 1200);
+      });
+
+      socket.addEventListener("message", (event) => {
+        const frame = new Uint8Array(event.data);
+        if (!frame.length) {
+          return;
+        }
+        if (frame[0] === FRAME_CONTROL) {
+          const parsed = parseControl(frame);
+          addEntry("control", parsed.title, parsed.text, frame);
+          return;
+        }
+        const parsed = parseFrame(frame);
+        addEntry(parsed.kind, parsed.title, parsed.text, frame);
+      });
+    }
+
+    function parseControl(frame) {
+      const subtype = frame[1];
+      const text = decoder.decode(frame.slice(2));
+      if (subtype === CTRL_WELCOME) {
+        peerId.textContent = text || "-";
+      }
+      const names = {
+        [CTRL_WELCOME]: "welcome",
+        [CTRL_ADDR]: "addr",
+        [CTRL_LOG]: "log",
+        [CTRL_ERROR]: "error"
+      };
+      return {
+        title: names[subtype] || "control",
+        text
+      };
+    }
+
+    function formatResultHeader(name, id, status) {
+      return name + "\nID: " + shortHex(id) + "\nStatus: " + status;
+    }
+
+    function formatCell(value) {
+      if (value.length < 16) {
+        return "Value: " + decoder.decode(value);
+      }
+      return [
+        "Cell:",
+        "  Genome: " + readU32(value, 0),
+        "  X: " + readU32(value, 4),
+        "  Y: " + readU32(value, 8),
+        "  Z: " + readU32(value, 12)
+      ].join("\n");
+    }
+
+    function parseFrame(frame) {
+      const opcode = frame[0];
+      const payload = frame.slice(1);
+      const id = payload.slice(0, 16);
+
+      if (payload.length < 20 && opcode >= OP.CREATE_DB) {
+        return {
+          kind: "rx",
+          title: opcodeName(opcode),
+          text: "respuesta incompleta"
+        };
+      }
+
+      if (opcode >= OP.CREATE_DB) {
+        const status = readU32(payload, 16);
+        switch (opcode) {
+          case OP.CREATE_DB:
+          case OP.DELETE_DB:
+          case OP.WRITE:
+          case OP.DELETE:
+            return {
+              kind: "rx",
+              title: opcodeName(opcode),
+              text: formatResultHeader(opcodeName(opcode) + "Result", id, status)
+            };
+          case OP.READ: {
+            const cellIndex = readU32(payload, 20);
+            const value = payload.slice(24);
+            return {
+              kind: "rx",
+              title: "READ",
+              text: [
+                formatResultHeader("ReadResult", id, status),
+                "CellIndex: " + cellIndex,
+                "Value(bytes): " + value.length,
+                formatCell(value)
+              ].join("\n")
+            };
+          }
+          case OP.READ_FREE: {
+            const value = payload.slice(20);
+            return {
+              kind: "rx",
+              title: "READ_FREE",
+              text: [
+                formatResultHeader("ReadFreeResult", id, status),
+                "Value(bytes): " + value.length,
+                formatCell(value)
+              ].join("\n")
+            };
+          }
+          case OP.READ_CELL: {
+            const value = payload.slice(20);
+            return {
+              kind: "rx",
+              title: "READ_CELL",
+              text: [
+                formatResultHeader("ReadCellResult", id, status),
+                "Value(bytes): " + value.length,
+                formatCell(value)
+              ].join("\n")
+            };
+          }
+          case OP.DIFERIR:
+          case OP.CRUZAR: {
+            const cellIndex = readU32(payload, 20);
+            return {
+              kind: "rx",
+              title: opcodeName(opcode),
+              text: [
+                formatResultHeader(opcodeName(opcode) + "Result", id, status),
+                "CellIndex: " + cellIndex
+              ].join("\n")
+            };
+          }
+          default:
+            break;
+        }
+      }
+
+      const body = payload.slice(16);
+      const bodyText = decoder.decode(body);
+      if (opcode === OP.EVENT_DIRECT_MSG && body.length >= 2) {
+        const peerLen = new DataView(body.buffer, body.byteOffset, body.byteLength).getUint16(0, false);
+        const peer = decoder.decode(body.slice(2, 2 + peerLen));
+        const message = decoder.decode(body.slice(2 + peerLen));
+        return {
+          kind: "async",
+          title: "DIRECT_MSG",
+          text: [
+            "DirectMsg",
+            "ID: " + shortHex(id),
+            "Peer: " + peer,
+            "Data: " + message
+          ].join("\n")
+        };
+      }
+
+      return {
+        kind: opcode >= OP.EVENT_PUBSUB && opcode <= OP.EVENT_PEER_FOUND ? "async" : "rx",
+        title: opcodeName(opcode),
+        text: [
+          opcodeName(opcode),
+          "ID: " + shortHex(id),
+          "Body: " + (bodyText || "<bytes>")
+        ].join("\n")
+      };
+    }
+
+    function genomeValueFromState(state) {
+      let result = 0;
+      for (const [key, bit] of genomeFlags) {
+        if (state[key]) {
+          result |= (1 << bit);
+        }
+      }
+      for (let bit = 12; bit <= 31; bit += 1) {
+        result &= ~(1 << bit);
+      }
+      return result >>> 0;
+    }
+
+    function readGenomeState(inputs) {
+      const state = {};
+      for (const [key] of genomeFlags) {
+        state[key] = Boolean(inputs[key] && inputs[key].checked);
+      }
+      return state;
+    }
+
+    function genomeSnippet(state) {
+      return [
+        "GenomaGenesis := protocol.GenomaDetail{",
+        ...genomeFlags.map(([key]) => "  " + key + ": " + String(Boolean(state[key])) + ","),
+        "}"
+      ].join("\n");
+    }
+
+    function createCard(config, target) {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const head = document.createElement("div");
+      head.className = "card-head";
+      const h3 = document.createElement("h3");
+      h3.textContent = config.title;
+      const opcode = document.createElement("div");
+      opcode.className = "opcode";
+      opcode.textContent = "opcode 0x" + config.opcode.toString(16).padStart(2, "0");
+      head.append(h3, opcode);
+
+      const fields = document.createElement("div");
+      fields.className = "fields";
+      const refs = {};
+
+      for (const row of config.rows || []) {
+        const wrap = document.createElement("div");
+        wrap.className = row.length === 3 ? "row-3" : row.length === 2 ? "row-2" : "fields";
+        for (const field of row) {
+          const label = document.createElement("label");
+          label.textContent = field.label;
+          const input = field.multiline ? document.createElement("textarea") : document.createElement("input");
+          input.value = field.value || "";
+          input.placeholder = field.placeholder || "";
+          label.appendChild(input);
+          wrap.appendChild(label);
+          refs[field.key] = input;
+        }
+        fields.appendChild(wrap);
+      }
+
+      if (config.genomeEditor) {
+        const genomeWrap = document.createElement("div");
+        genomeWrap.className = "checks";
+        for (const [key] of genomeFlags) {
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = Boolean(defaultGenome[key]);
+          label.append(input, document.createTextNode(key));
+          genomeWrap.appendChild(label);
+          refs[key] = input;
+        }
+        fields.appendChild(genomeWrap);
+      }
+
+      const snippet = document.createElement("pre");
+      snippet.className = "snippet";
+      const hexbox = document.createElement("pre");
+      hexbox.className = "hexbox";
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      const send = document.createElement("button");
+      send.type = "button";
+      send.textContent = "send";
+      actions.append(hint, send);
+
+      card.append(head, fields, snippet, hexbox, actions);
+      target.appendChild(card);
+
+      const state = { id: randomBytes(16) };
+
+      function snapshot() {
+        const values = {};
+        for (const key of Object.keys(refs)) {
+          values[key] = refs[key].type === "checkbox" ? refs[key].checked : refs[key].value;
+        }
+        return values;
+      }
+
+      function buildFrame() {
+        const values = snapshot();
+        const payload = config.payload(values);
+        return { values, frame: concat(Uint8Array.of(config.opcode), state.id, payload) };
+      }
+
+      function render() {
+        const { values, frame } = buildFrame();
+        const lines = [];
+        if (config.genomeEditor) {
+          lines.push(genomeSnippet(readGenomeState(refs)), "");
+        }
+        lines.push(config.snippet(values, readGenomeState(refs)));
+        snippet.textContent = lines.join("\n");
+        hexbox.textContent = [
+          "id := " + shortHex(state.id),
+          "bytes := " + frame.length,
+          "raw := " + hex(frame)
+        ].join("\n");
+        hint.textContent = "frame listo";
+      }
+
+      for (const key of Object.keys(refs)) {
+        refs[key].addEventListener("input", render);
+        refs[key].addEventListener("change", render);
+      }
+
+      send.addEventListener("click", () => {
+        const { values, frame } = buildFrame();
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          addEntry("local", config.title, "socket cerrado", frame);
+          return;
+        }
+        socket.send(frame);
+        addEntry("tx", config.title, config.tx(values, state.id, readGenomeState(refs)), frame);
+        state.id = randomBytes(16);
+        render();
+      });
+
+      render();
+    }
+
+    function createSimpleSnippet(fn, args) {
+      return fn + "(" + args.join(", ") + ")";
+    }
+
+    const samsaraConfig = [
+      {
+        title: "CreateDB",
+        opcode: OP.CREATE_DB,
+        genomeEditor: true,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "secret", label: "secret", value: "comotellamas" }],
+          [{ key: "size", label: "size", value: "10" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const secret = textBytes(values.secret);
+          const genome = genomeValueFromState(values);
+          return concat(u32(db.length), u32(secret.length), u32(values.size), u32(genome), db, secret);
+        },
+        snippet: (values, genome) => createSimpleSnippet("parser.CreateDBReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.size) >>> 0), "parser.GenomaDetailFromBytes(GenomaGenesis) // genome=" + genomeValueFromState(genome)]),
+        tx: (values, id, genome) => [
+          genomeSnippet(genome),
+          "",
+          createSimpleSnippet("parser.CreateDBReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.size) >>> 0), "parser.GenomaDetailFromBytes(GenomaGenesis)"]),
+          "ID: " + shortHex(id)
+        ].join("\n")
+      },
+      {
+        title: "DeleteDB",
+        opcode: OP.DELETE_DB,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "secret", label: "secret", value: "comotellamas" }],
+          [{ key: "cell", label: "cellIndex", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const secret = textBytes(values.secret);
+          return concat(u32(values.cell), u32(db.length), u32(secret.length), db, secret);
+        },
+        snippet: (values) => createSimpleSnippet("parser.DeleteDBReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.cell) >>> 0)]),
+        tx: (values, id) => createSimpleSnippet("parser.DeleteDBReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.cell) >>> 0)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Write",
+        opcode: OP.WRITE,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "key", label: "key", value: "nombre" }],
+          [{ key: "value", label: "value", value: "diego" }, { key: "secret", label: "secret", value: "comotellamas" }],
+          [{ key: "cell", label: "cellIndex", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const key = textBytes(values.key);
+          const value = textBytes(values.value);
+          const secret = textBytes(values.secret);
+          return concat(u32(values.cell), u32(db.length), u32(key.length), u32(value.length), u32(secret.length), db, key, value, secret);
+        },
+        snippet: (values) => createSimpleSnippet("parser.WriteReqBytes", [String(Number(values.cell) >>> 0), quoted(values.db), quoted(values.key), quoted(values.value), quoted(values.secret)]),
+        tx: (values, id) => createSimpleSnippet("parser.WriteReqBytes", [String(Number(values.cell) >>> 0), quoted(values.db), quoted(values.key), quoted(values.value), quoted(values.secret)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Read",
+        opcode: OP.READ,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "key", label: "key", value: "nombre" }],
+          [{ key: "secret", label: "secret", value: "comotellamas" }, { key: "cell", label: "cellIndex", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const key = textBytes(values.key);
+          const secret = textBytes(values.secret);
+          return concat(u32(values.cell), u32(db.length), u32(key.length), u32(secret.length), db, key, secret);
+        },
+        snippet: (values) => createSimpleSnippet("parser.ReadReqBytes", [String(Number(values.cell) >>> 0), quoted(values.db), quoted(values.key), quoted(values.secret)]),
+        tx: (values, id) => createSimpleSnippet("parser.ReadReqBytes", [String(Number(values.cell) >>> 0), quoted(values.db), quoted(values.key), quoted(values.secret)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "ReadFree",
+        opcode: OP.READ_FREE,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "key", label: "key", value: "nombre" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const key = textBytes(values.key);
+          return concat(u32(db.length), u32(key.length), db, key);
+        },
+        snippet: (values) => createSimpleSnippet("parser.ReadFreeReqBytes", [quoted(values.db), quoted(values.key)]),
+        tx: (values, id) => createSimpleSnippet("parser.ReadFreeReqBytes", [quoted(values.db), quoted(values.key)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Delete",
+        opcode: OP.DELETE,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "key", label: "key", value: "nombre" }],
+          [{ key: "secret", label: "secret", value: "comotellamas" }, { key: "cell", label: "cellIndex", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const key = textBytes(values.key);
+          const secret = textBytes(values.secret);
+          return concat(u32(values.cell), u32(db.length), u32(key.length), u32(secret.length), db, key, secret);
+        },
+        snippet: (values) => createSimpleSnippet("parser.DeleteReqBytes", [quoted(values.db), quoted(values.key), quoted(values.secret), String(Number(values.cell) >>> 0)]),
+        tx: (values, id) => createSimpleSnippet("parser.DeleteReqBytes", [quoted(values.db), quoted(values.key), quoted(values.secret), String(Number(values.cell) >>> 0)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "ReadCell",
+        opcode: OP.READ_CELL,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "secret", label: "secret", value: "comotellamas" }],
+          [{ key: "cell", label: "cellIndex", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const secret = textBytes(values.secret);
+          return concat(u32(values.cell), u32(db.length), u32(secret.length), db, secret);
+        },
+        snippet: (values) => createSimpleSnippet("parser.ReadCellReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.cell) >>> 0)]),
+        tx: (values, id) => createSimpleSnippet("parser.ReadCellReqBytes", [quoted(values.db), quoted(values.secret), String(Number(values.cell) >>> 0)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Diferir",
+        opcode: OP.DIFERIR,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "secret", label: "parentSecret", value: "comotellamas" }],
+          [{ key: "child", label: "childSecret", value: "celular" }, { key: "cell", label: "cellIndex", value: "0" }],
+          [{ key: "genome", label: "childGenome", value: "1023" }, { key: "x", label: "x", value: "0" }, { key: "y", label: "y", value: "0" }],
+          [{ key: "z", label: "z", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const secret = textBytes(values.secret);
+          const child = textBytes(values.child);
+          return concat(u32(db.length), u32(values.cell), u32(secret.length), u32(values.genome), u32(values.x), u32(values.y), u32(values.z), randomBytes(16), u32(child.length), db, secret, child);
+        },
+        snippet: (values) => createSimpleSnippet("parser.DiferirReqBytes", [quoted(values.db), quoted(values.secret), quoted(values.child), String(Number(values.cell) >>> 0), String(Number(values.genome) >>> 0), String(Number(values.x) >>> 0), String(Number(values.y) >>> 0), String(Number(values.z) >>> 0)]),
+        tx: (values, id) => createSimpleSnippet("parser.DiferirReqBytes", [quoted(values.db), quoted(values.secret), quoted(values.child), String(Number(values.cell) >>> 0), String(Number(values.genome) >>> 0), String(Number(values.x) >>> 0), String(Number(values.y) >>> 0), String(Number(values.z) >>> 0)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Cruzar",
+        opcode: OP.CRUZAR,
+        rows: [
+          [{ key: "db", label: "db", value: "pruebas" }, { key: "child", label: "childSecret", value: "cruzado" }],
+          [{ key: "secretA", label: "secretA", value: "comotellamas" }, { key: "secretB", label: "secretB", value: "celular" }],
+          [{ key: "cellA", label: "cellIndexA", value: "0" }, { key: "cellB", label: "cellIndexB", value: "1" }],
+          [{ key: "x", label: "x", value: "0" }, { key: "y", label: "y", value: "0" }, { key: "z", label: "z", value: "0" }]
+        ],
+        payload: (values) => {
+          const db = textBytes(values.db);
+          const secretA = textBytes(values.secretA);
+          const secretB = textBytes(values.secretB);
+          const child = textBytes(values.child);
+          return concat(u32(db.length), u32(values.cellA), u32(values.cellB), u32(secretA.length), u32(secretB.length), u32(values.x), u32(values.y), u32(values.z), u32(child.length), db, secretA, secretB, child);
+        },
+        snippet: (values) => createSimpleSnippet("parser.CruzarReqBytes", [quoted(values.db), String(Number(values.cellA) >>> 0), String(Number(values.cellB) >>> 0), quoted(values.secretA), quoted(values.secretB), String(Number(values.x) >>> 0), String(Number(values.y) >>> 0), String(Number(values.z) >>> 0), quoted(values.child)]),
+        tx: (values, id) => createSimpleSnippet("parser.CruzarReqBytes", [quoted(values.db), String(Number(values.cellA) >>> 0), String(Number(values.cellB) >>> 0), quoted(values.secretA), quoted(values.secretB), String(Number(values.x) >>> 0), String(Number(values.y) >>> 0), String(Number(values.z) >>> 0), quoted(values.child)]) + "\nID: " + shortHex(id)
+      }
+    ];
+
+    const synapConfig = [
+      {
+        title: "Relay",
+        opcode: OP.RELAY,
+        rows: [[{ key: "addr", label: "addr", value: "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/12D3KooWExample" }]],
+        payload: (values) => textBytes(values.addr),
+        snippet: (values) => createSimpleSnippet("relay", [quoted(values.addr)]),
+        tx: (values, id) => createSimpleSnippet("relay", [quoted(values.addr)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Dial",
+        opcode: OP.DIAL,
+        rows: [[{ key: "addr", label: "addr", value: "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/12D3KooWExample" }]],
+        payload: (values) => textBytes(values.addr),
+        snippet: (values) => createSimpleSnippet("dial", [quoted(values.addr)]),
+        tx: (values, id) => createSimpleSnippet("dial", [quoted(values.addr)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Sub",
+        opcode: OP.SUB,
+        rows: [[{ key: "topic", label: "topic", value: "diarsaba-demo" }]],
+        payload: (values) => textBytes(values.topic),
+        snippet: (values) => createSimpleSnippet("sub", [quoted(values.topic)]),
+        tx: (values, id) => createSimpleSnippet("sub", [quoted(values.topic)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Pub",
+        opcode: OP.PUB,
+        rows: [[{ key: "topic", label: "topic", value: "diarsaba-demo" }, { key: "message", label: "message", value: "hola" }]],
+        payload: (values) => textBytes(values.topic + "|" + values.message),
+        snippet: (values) => createSimpleSnippet("pub", [quoted(values.topic), quoted(values.message)]),
+        tx: (values, id) => createSimpleSnippet("pub", [quoted(values.topic), quoted(values.message)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "Peers",
+        opcode: OP.PEERS,
+        rows: [],
+        payload: () => new Uint8Array(0),
+        snippet: () => createSimpleSnippet("peers", []),
+        tx: (_, id) => createSimpleSnippet("peers", []) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "GenerateCID",
+        opcode: OP.GENERATE_CID,
+        rows: [[{ key: "data", label: "data", value: "contenido de ejemplo" }]],
+        payload: (values) => textBytes(values.data),
+        snippet: (values) => createSimpleSnippet("generateCID", [quoted(values.data)]),
+        tx: (values, id) => createSimpleSnippet("generateCID", [quoted(values.data)]) + "\nID: " + shortHex(id)
+      },
+      {
+        title: "DirectMsg",
+        opcode: OP.DIRECT_MSG,
+        rows: [[{ key: "peer", label: "peer", value: "12D3KooWExample" }, { key: "data", label: "data", value: "hola directo" }]],
+        payload: (values) => {
+          const peer = textBytes(values.peer);
+          const data = textBytes(values.data);
+          return concat(u16(peer.length), peer, data);
+        },
+        snippet: (values) => createSimpleSnippet("directMsg", [quoted(values.peer), quoted(values.data)]),
+        tx: (values, id) => createSimpleSnippet("directMsg", [quoted(values.peer), quoted(values.data)]) + "\nID: " + shortHex(id)
+      }
+    ];
+
+    for (const config of samsaraConfig) {
+      createCard(config, samsaraCards);
+    }
+
+    for (const config of synapConfig) {
+      createCard(config, synapCards);
+    }
+
+    document.getElementById("clear-stream").addEventListener("click", clearEntries);
+
+    connect();
+  </script>
+</body>
+</html>
