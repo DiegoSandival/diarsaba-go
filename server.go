@@ -165,8 +165,9 @@ func (a *App) handlePublicRead(w http.ResponseWriter, r *http.Request) {
 	}
 	a.logf("public read ok db=%s key=%s bytes=%d", dbName, key, len(response[20:]))
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	_, _ = w.Write(response[20:])
+	value := response[20:]
+	w.Header().Set("Content-Type", detectBrowserContentType(value))
+	_, _ = w.Write(value)
 }
 
 func (a *App) handleServerAPI(w http.ResponseWriter, r *http.Request) {
@@ -395,4 +396,30 @@ func splitPublicPath(rawPath string) (string, string, bool) {
 	}
 
 	return dbName, key, true
+}
+
+func detectBrowserContentType(value []byte) string {
+	if len(value) == 0 {
+		return "text/plain; charset=utf-8"
+	}
+
+	contentType := http.DetectContentType(value)
+	switch contentType {
+	case "text/plain; charset=utf-8", "text/html; charset=utf-8":
+		return contentType
+	}
+
+	if strings.HasPrefix(contentType, "text/") {
+		return contentType
+	}
+
+	if strings.HasPrefix(contentType, "image/") || strings.HasPrefix(contentType, "audio/") || strings.HasPrefix(contentType, "video/") {
+		return contentType
+	}
+
+	if strings.Contains(contentType, "javascript") || strings.Contains(contentType, "json") || strings.Contains(contentType, "xml") || strings.Contains(contentType, "svg") || strings.Contains(contentType, "pdf") {
+		return contentType
+	}
+
+	return "application/octet-stream"
 }
