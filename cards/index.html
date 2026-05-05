@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>diarsaba cards</title>
+  <style>
+    :root {
+      --bg: #f6f6f4;
+      --panel: #ffffff;
+      --line: #d9d9d3;
+      --text: #151515;
+      --muted: #66665f;
+      --accent: #111111;
+      --soft: #f0f0ea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.4 "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1280px, calc(100vw - 24px));
+      margin: 16px auto 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      align-items: start;
+      gap: 16px;
+    }
+
+    .topbar,
+    .log,
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .topbar {
+      grid-column: 1;
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .status {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+    }
+
+    .dot.on {
+      background: #218838;
+    }
+
+    .group {
+      grid-column: 1;
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .mono,
+    pre,
+    input,
+    textarea,
+    button,
+    select {
+      font-family: "IBM Plex Mono", Consolas, monospace;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .fields {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      display: grid;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    textarea {
+      min-height: 66px;
+      resize: vertical;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 11px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .log {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .entries {
+      display: grid;
+      gap: 8px;
+      max-height: calc(100vh - 120px);
+      overflow: auto;
+    }
+
+    .entry {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--soft);
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar,
+      .group,
+      .log {
+        grid-column: 1;
+      }
+
+      .log {
+        grid-row: auto;
+        position: static;
+      }
+
+      .entries {
+        max-height: 320px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      main {
+        width: calc(100vw - 16px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="topbar">
+      <h1>diarsaba cards</h1>
+      <p>Una tarjeta por opcode. Cada tarjeta muestra el frame nativo exacto que enviara al presionar su boton.</p>
+      <div class="status">
+        <div class="pill"><span id="socket-dot" class="dot"></span><span id="socket-state">desconectado</span></div>
+        <div class="pill">mode: <span id="app-mode" class="mono">-</span></div>
+        <div class="pill">transport: <span id="transport-kind" class="mono">-</span></div>
+        <div class="pill">endpoint: <span id="transport-endpoint" class="mono">-</span></div>
+      </div>
+      <div class="meta">Peer: <span id="peer-id" class="mono">-</span></div>
+    </section>
+
+    <section class="group">
+      <h2>Synap2P</h2>
+      <div id="synap-grid" class="grid"></div>
+    </section>
+
+    <section class="group">
+      <h2>Samsara</h2>
+      <div id="samsara-grid" class="grid"></div>
+    </section>
+
+    <section class="log">
+      <div class="card-head">
+        <h3>trafico</h3>
+        <button id="clear-log" type="button">clear</button>
+      </div>
+      <div id="entries" class="entries"></div>
+    </section>
+  </main>
+
+  <script>
+    const APP_MODE = __DIARSABA_MODE_JSON__;
+    const APP_TRANSPORT = __DIARSABA_TRANSPORT_JSON__;
+    const APP_WS_PATH = __DIARSABA_WS_PATH_JSON__;
+    const APP_POST_PATH = __DIARSABA_POST_PATH_JSON__;
+    const APP_PEER_ID = __DIARSABA_PEER_ID_JSON__;
+
+    const OP = {
+      RELAY: 0x01,
+      DIAL: 0x02,
+      SUB: 0x03,
+      USE: 0x04,
+      PUB: 0x05,
+      PEERS: 0x06,
+      UNSUB: 0x07,
+      ANNOUNCE: 0x08,
+      UNANNOUNCE: 0x09,
+      FIND_PROVIDERS: 0x0a,
+      DIRECT_MSG: 0x0b,
+      DISCONNECT: 0x0c,
+      GENERATE_CID: 0x0d,
+      EVENT_PUBSUB: 0x0e,
+      EVENT_DIRECT_MSG: 0x0f,
+      EVENT_PEER_FOUND: 0x10,
+      CREATE_DB: 0x20,
+      DELETE_DB: 0x21,
+      WRITE: 0x22,
+      READ: 0x23,
+      READ_FREE: 0x24,
+      DELETE: 0x25,
+      READ_CELL: 0x26,
+      DIFERIR: 0x27,
+      CRUZAR: 0x28
+    };
+
+    const REQUEST_OP_MIN = OP.RELAY;
+    const REQUEST_OP_MAX = OP.GENERATE_CID;
+    const EVENT_OP_MIN = OP.EVENT_PUBSUB;
+    const EVENT_OP_MAX = OP.EVENT_PEER_FOUND;
+    const SAMSARA_OP_MIN = OP.CREATE_DB;
+    const SAMSARA_OP_MAX = OP.CRUZAR;
+    const KNOWN_OPCODES = new Set(Object.values(OP));
+
+    const encoder = new TextEncoder();
+    const strictDecoder = new TextDecoder("utf-8", { fatal: true });
+    const genomeFlags = [
+      ["readSelf", 0],
+      ["readNeighbors", 1],
+      ["writeSelf", 2],
+      ["writeNeighbors", 3],
+      ["deleteSelf", 4],
+      ["deleteNeighbors", 5],
+      ["diferirSelf", 6],
+      ["cruzarSelf", 7],
+      ["dominanceSelf", 8],
+      ["freeRead", 9],
+      ["isMigrated", 10]
+    ];
+
+    const socketDot = document.getElementById("socket-dot");
+    const socketState = document.getElementById("socket-state");
+    const appMode = document.getElementById("app-mode");
+    const transportKind = document.getElementById("transport-kind");
+    const transportEndpoint = document.getElementById("transport-endpoint");
+    const peerId = document.getElementById("peer-id");
+    const synapGrid = document.getElementById("synap-grid");
+    const samsaraGrid = document.getElementById("samsara-grid");
+    const entries = document.getElementById("entries");
+
+    const pending = new Map();
+    let socket = null;
+
+    appMode.textContent = APP_MODE;
+    transportKind.textContent = APP_TRANSPORT;
+    transportEndpoint.textContent = APP_TRANSPORT === "ws" ? APP_WS_PATH : APP_POST_PATH;
+    peerId.textContent = APP_PEER_ID || "-";
+
+    function randomBytes(length) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return bytes;
+    }
+
+    function textBytes(value) {
+      return encoder.encode(value || "");
+    }
+
+    function u16(value) {
+      const out = new Uint8Array(2);
+      new DataView(out.buffer).setUint16(0, Number(value) >>> 0, false);
+      return out;
+    }
+
+    function u32(value) {
+      const out = new Uint8Array(4);
+      new DataView(out.buffer).setUint32(0, Number(value) >>> 0, false);
+      return out;
+    }
+
+    function concat(...parts) {
+      const total = parts.reduce((sum, part) => sum + part.length, 0);
+      const out = new Uint8Array(total);
+      let offset = 0;
+      for (const part of parts) {
+        out.set(part, offset);
+        offset += part.length;
+      }
+      return out;
+    }
+
+    function hex(bytes) {
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(" ");
+    }
+
+    function shortHex(bytes) {
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    function readU16(bytes, offset) {
+      if (offset + 2 > bytes.length) {
+        return null;
+      }
+      return new DataView(bytes.buffer, bytes.byteOffset + offset, 2).getUint16(0, false);
+    }
+
+    function readU32(bytes, offset) {
+      if (offset + 4 > bytes.length) {
+        return null;
+      }
+      return new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0, false);
+    }
+
+    function frameOpcode(frame) {
+      const opcode = readU32(frame, 0);
+      if (opcode === null) {
+        return null;
+      }
+      return opcode & 0xff;
+    }
+
+    function isOpcodeFrame(frame) {
+      const opcode = frameOpcode(frame);
+      return opcode !== null && KNOWN_OPCODES.has(opcode);
+    }
+
+    function tryDecodeText(bytes) {
+      if (!bytes.length) {
+        return "";
+      }
+      try {
+        return strictDecoder.decode(bytes);
+      } catch {
+        return null;
+      }
+    }
+
+    function quoteText(value) {
+      return JSON.stringify(value);
+    }
+
+    function payloadTextLines(label, bytes) {
+      const lines = [label + "_bytes=" + bytes.length];
+      const text = tryDecodeText(bytes);
+      if (text !== null) {
+        lines.push(label + "_text=" + quoteText(text));
+      }
+      return lines;
+    }
+
+    function parseGenomeFlags(value) {
+      return genomeFlags.filter(([, bit]) => (value & (1 << bit)) !== 0).map(([name]) => name);
+    }
+
+    function addEntry(kind, title, bytes, extra) {
+      const block = document.createElement("div");
+      block.className = "entry";
+      const text = [kind + " | " + title];
+      if (extra) {
+        if (Array.isArray(extra)) {
+          text.push(...extra);
+        } else {
+          text.push(extra);
+        }
+      }
+      if (bytes) {
+        text.push("raw=" + hex(bytes));
+      }
+      block.textContent = text.join("\n");
+      entries.prepend(block);
+    }
+
+    function setConnectionState(online, label = null) {
+      socketDot.className = online ? "dot on" : "dot";
+      if (label) {
+        socketState.textContent = label;
+        return;
+      }
+      socketState.textContent = online ? "conectado" : "desconectado";
+    }
+
+    function pendingKey(id) {
+      return shortHex(id);
+    }
+
+    function rememberPending(id, opcode) {
+      pending.set(pendingKey(id), opcode);
+    }
+
+    function peekPending(id) {
+      return pending.get(pendingKey(id)) ?? null;
+    }
+
+    function consumePending(id) {
+      const key = pendingKey(id);
+      const opcode = pending.get(key) ?? null;
+      pending.delete(key);
+      return opcode;
+    }
+
+    function extractResponseId(frame) {
+      if (frame.length < 20) {
+        return null;
+      }
+      if (isOpcodeFrame(frame)) {
+        return frame.slice(4, 20);
+      }
+      return frame.slice(0, 16);
+    }
+
+    function parseDirectMsgPayload(payload) {
+      const lines = ["payload_bytes=" + payload.length];
+      const peerLength = readU16(payload, 0);
+      if (peerLength === null) {
+        return lines;
+      }
+      lines.push("peer_len=" + peerLength);
+      if (2 + peerLength > payload.length) {
+        return lines;
+      }
+      const peer = payload.slice(2, 2 + peerLength);
+      const data = payload.slice(2 + peerLength);
+      const peerText = tryDecodeText(peer);
+      lines.push("peer=" + quoteText(peerText !== null ? peerText : shortHex(peer)));
+      lines.push(...payloadTextLines("data", data));
+      return lines;
+    }
+
+    function parseSynapTextPayload(opcode, payload) {
+      const lines = ["payload_bytes=" + payload.length];
+      const text = tryDecodeText(payload);
+      if (text === null) {
+        return lines;
+      }
+
+      switch (opcode) {
+        case OP.RELAY:
+        case OP.DIAL:
+          lines.push("addr=" + quoteText(text));
+          break;
+        case OP.SUB:
+        case OP.USE:
+        case OP.UNSUB:
+          lines.push("topic=" + quoteText(text));
+          break;
+        case OP.PUB: {
+          const separator = text.indexOf("|");
+          if (separator === -1) {
+            lines.push("payload_text=" + quoteText(text));
+            break;
+          }
+          lines.push("topic=" + quoteText(text.slice(0, separator)));
+          lines.push("message=" + quoteText(text.slice(separator + 1)));
+          break;
+        }
+        case OP.ANNOUNCE:
+        case OP.UNANNOUNCE:
+        case OP.FIND_PROVIDERS:
+        case OP.GENERATE_CID:
+          lines.push("cid=" + quoteText(text));
+          break;
+        case OP.PEERS:
+          lines.push("peers=" + quoteText(text));
+          break;
+        case OP.DISCONNECT:
+          lines.push("peer=" + quoteText(text));
+          break;
+        default:
+          lines.push("payload_text=" + quoteText(text));
+          break;
+      }
+      return lines;
+    }
+
+    function parseSynapOpcodeFrame(frame, opcode) {
+      const lines = ["opcode=" + opcodeName(opcode)];
+      if (frame.length < 20) {
+        lines.push("id=<incompleto>");
+        return lines;
+      }
+
+      const id = frame.slice(4, 20);
+      lines.push("id=" + shortHex(id));
+      const payload = frame.slice(20);
+
+      if (opcode >= REQUEST_OP_MIN && opcode <= REQUEST_OP_MAX) {
+        consumePending(id);
+        if (!payload.length) {
+          lines.push("status=<sin payload>");
+          return lines;
+        }
+        lines.push("status=" + payload[0]);
+        lines.push("ok=" + (payload[0] === 0x01));
+        if (payload.length > 1) {
+          lines.push(...payloadTextLines("data", payload.slice(1)));
+        }
+        return lines;
+      }
+
+      if (opcode === OP.EVENT_PUBSUB) {
+        return lines.concat(payloadTextLines("data", payload));
+      }
+      if (opcode === OP.EVENT_DIRECT_MSG) {
+        return lines.concat(parseDirectMsgPayload(payload));
+      }
+      if (opcode === OP.EVENT_PEER_FOUND) {
+        const peerLength = readU16(payload, 0);
+        lines.push("payload_bytes=" + payload.length);
+        if (peerLength !== null && 2 + peerLength <= payload.length) {
+          const peer = payload.slice(2, 2 + peerLength);
+          const peerText = tryDecodeText(peer);
+          lines.push("peer=" + quoteText(peerText !== null ? peerText : shortHex(peer)));
+        }
+        return lines;
+      }
+
+      return lines.concat(parseSynapTextPayload(opcode, payload));
+    }
+
+    function parseSamsaraResult(frame, opcode) {
+      const lines = ["opcode=" + opcodeName(opcode)];
+      if (frame.length < 20) {
+        lines.push("result=<incompleto>");
+        return lines;
+      }
+
+      const id = frame.slice(0, 16);
+      const status = readU32(frame, 16);
+      lines.push("id=" + shortHex(id));
+
+      if (status !== 0 && status !== 1) {
+        return parseErrorFrame(frame, opcode);
+      }
+
+      lines.push("status=" + status);
+      lines.push("ok=" + (status === 1));
+
+      switch (opcode) {
+        case OP.CREATE_DB:
+        case OP.DELETE_DB:
+        case OP.WRITE:
+        case OP.DELETE:
+          return lines;
+        case OP.READ: {
+          const cellIndex = readU32(frame, 20);
+          lines.push("cellIndex=" + (cellIndex === null ? "<incompleto>" : cellIndex));
+          return lines.concat(payloadTextLines("value", frame.slice(24)));
+        }
+        case OP.READ_FREE:
+          return lines.concat(payloadTextLines("value", frame.slice(20)));
+        case OP.READ_CELL: {
+          const value = frame.slice(20);
+          lines.push("value_bytes=" + value.length);
+          if (value.length >= 16) {
+            const genome = readU32(value, 0);
+            const x = readU32(value, 4);
+            const y = readU32(value, 8);
+            const z = readU32(value, 12);
+            lines.push("cell.genome=" + genome);
+            lines.push("cell.genome_bits=" + genome.toString(2).padStart(32, "0"));
+            lines.push("cell.flags=" + quoteText(parseGenomeFlags(genome).join(", ")));
+            lines.push("cell.x=" + x);
+            lines.push("cell.y=" + y);
+            lines.push("cell.z=" + z);
+            return lines;
+          }
+          const text = tryDecodeText(value);
+          if (text !== null) {
+            lines.push("value_text=" + quoteText(text));
+          }
+          return lines;
+        }
+        case OP.DIFERIR:
+        case OP.CRUZAR: {
+          const cellIndex = readU32(frame, 20);
+          lines.push("newCellIndex=" + (cellIndex === null ? "<incompleto>" : cellIndex));
+          return lines;
+        }
+        default:
+          return lines.concat(payloadTextLines("body", frame.slice(20)));
+      }
+    }
+
+    function parseErrorFrame(frame, opcodeHint) {
+      const lines = ["type=error_envelope"];
+      if (frame.length < 20) {
+        lines.push("error=<incompleto>");
+        return lines;
+      }
+
+      const id = frame.slice(0, 16);
+      const errorId = readU32(frame, 16);
+      const info = frame.slice(20);
+      lines.push("id=" + shortHex(id));
+      if (opcodeHint !== null) {
+        lines.push("request=" + opcodeName(opcodeHint));
+      }
+      lines.push("error_id=" + errorId);
+      const text = tryDecodeText(info);
+      if (text !== null) {
+        lines.push("info_text=" + quoteText(text));
+      } else if (info.length) {
+        lines.push("info_hex=" + hex(info));
+      }
+      return lines;
+    }
+
+    function inspectIncomingFrame(frame) {
+      if (!frame.length) {
+        return { title: "frame vacio", lines: ["frame vacio"] };
+      }
+
+      const opcode = frameOpcode(frame);
+      if (opcode !== null && KNOWN_OPCODES.has(opcode)) {
+        return {
+          title: opcodeName(opcode),
+          lines: parseSynapOpcodeFrame(frame, opcode)
+        };
+      }
+
+      const responseId = extractResponseId(frame);
+      const opcodeHint = responseId ? consumePending(responseId) : null;
+      if (opcodeHint !== null) {
+        if (opcodeHint >= SAMSARA_OP_MIN && opcodeHint <= SAMSARA_OP_MAX) {
+          return {
+            title: opcodeName(opcodeHint),
+            lines: parseSamsaraResult(frame, opcodeHint)
+          };
+        }
+        return {
+          title: opcodeName(opcodeHint) + " error",
+          lines: parseErrorFrame(frame, opcodeHint)
+        };
+      }
+
+      return {
+        title: "response",
+        lines: parseErrorFrame(frame, null)
+      };
+    }
+
+    function opcodeName(opcode) {
+      const names = {
+        [OP.RELAY]: "RELAY",
+        [OP.DIAL]: "DIAL",
+        [OP.SUB]: "SUB",
+        [OP.USE]: "USE",
+        [OP.PUB]: "PUB",
+        [OP.PEERS]: "PEERS",
+        [OP.UNSUB]: "UNSUB",
+        [OP.ANNOUNCE]: "ANNOUNCE",
+        [OP.UNANNOUNCE]: "UNANNOUNCE",
+        [OP.FIND_PROVIDERS]: "FIND_PROVIDERS",
+        [OP.DIRECT_MSG]: "DIRECT_MSG",
+        [OP.DISCONNECT]: "DISCONNECT",
+        [OP.GENERATE_CID]: "GENERATE_CID",
+        [OP.EVENT_PUBSUB]: "EVENT_PUBSUB",
+        [OP.EVENT_DIRECT_MSG]: "EVENT_DIRECT_MSG",
+        [OP.EVENT_PEER_FOUND]: "EVENT_PEER_FOUND",
+        [OP.CREATE_DB]: "CREATE_DB",
+        [OP.DELETE_DB]: "DELETE_DB",
+        [OP.WRITE]: "WRITE",
+        [OP.READ]: "READ",
+        [OP.READ_FREE]: "READ_FREE",
+        [OP.DELETE]: "DELETE",
+        [OP.READ_CELL]: "READ_CELL",
+        [OP.DIFERIR]: "DIFERIR",
+        [OP.CRUZAR]: "CRUZAR"
+      };
+      return names[opcode] || ("0x" + opcode.toString(16).padStart(2, "0"));
+    }
+
+    function fieldValue(fields, key) {
+      return fields[key] ? fields[key].value : "";
+    }
+
+    function buildRequestFrame(opcode, id, payload) {
+      return concat(u32(opcode), id, payload);
+    }
+
+    async function sendFrame(config, frame, id) {
+      rememberPending(id, config.opcode);
+      addEntry("tx", config.name, frame, "id=" + shortHex(id));
+
+      if (APP_TRANSPORT === "ws") {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          consumePending(id);
+          addEntry("local", config.name, frame, "socket cerrado");
+          return;
+        }
+        socket.send(frame);
+        return;
+      }
+
+      try {
+        const response = await fetch(APP_POST_PATH, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/octet-stream"
+          },
+          body: frame
+        });
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        const inspected = inspectIncomingFrame(bytes);
+        addEntry("rx", inspected.title, bytes, inspected.lines);
+      } catch (error) {
+        consumePending(id);
+        addEntry("local", config.name, frame, String(error));
+      }
+    }
+
+    function connectSocket() {
+      if (APP_TRANSPORT !== "ws") {
+        setConnectionState(true, "http ready");
+        return;
+      }
+
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(protocol + "://" + window.location.host + APP_WS_PATH);
+      socket.binaryType = "arraybuffer";
+
+      socket.addEventListener("open", () => {
+        setConnectionState(true);
+        addEntry("local", "socket open");
+      });
+
+      socket.addEventListener("close", () => {
+        setConnectionState(false);
+        addEntry("local", "socket close");
+        window.setTimeout(connectSocket, 1200);
+      });
+
+      socket.addEventListener("message", (event) => {
+        const frame = new Uint8Array(event.data);
+        const inspected = inspectIncomingFrame(frame);
+        addEntry("rx", inspected.title, frame, inspected.lines);
+      });
+    }
+
+    function buildCard(target, config) {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const head = document.createElement("div");
+      head.className = "card-head";
+
+      const titleBox = document.createElement("div");
+      const title = document.createElement("h3");
+      title.textContent = config.name;
+      const meta = document.createElement("div");
+      meta.className = "meta mono";
+      meta.textContent = "opcode 0x" + config.opcode.toString(16).padStart(2, "0");
+      titleBox.append(title, meta);
+
+      const send = document.createElement("button");
+      send.type = "button";
+      send.textContent = "send";
+      head.append(titleBox, send);
+
+      const fieldsWrap = document.createElement("div");
+      fieldsWrap.className = "fields";
+      const fields = {};
+
+      for (const field of config.fields) {
+        const label = document.createElement("label");
+        label.textContent = field.label;
+        const input = field.multiline ? document.createElement("textarea") : document.createElement("input");
+        input.value = field.value || "";
+        input.placeholder = field.placeholder || "";
+        label.appendChild(input);
+        fieldsWrap.appendChild(label);
+        fields[field.key] = input;
+      }
+
+      const preview = document.createElement("pre");
+      card.append(head, fieldsWrap, preview);
+      target.appendChild(card);
+
+      const state = { id: randomBytes(16) };
+
+      function buildFrame() {
+        const payload = config.payload(fields);
+        return buildRequestFrame(config.opcode, state.id, payload);
+      }
+
+      function updatePreview() {
+        const frame = buildFrame();
+        preview.textContent = [
+          "name: " + config.name,
+          "opcode: 0x" + config.opcode.toString(16).padStart(2, "0"),
+          "id: " + shortHex(state.id),
+          "bytes: " + frame.length,
+          "raw: " + hex(frame)
+        ].join("\n");
+      }
+
+      for (const key of Object.keys(fields)) {
+        fields[key].addEventListener("input", updatePreview);
+      }
+
+      send.addEventListener("click", async () => {
+        const id = state.id.slice();
+        const frame = buildFrame();
+        await sendFrame(config, frame, id);
+        state.id = randomBytes(16);
+        updatePreview();
+      });
+
+      updatePreview();
+    }
+
+    const synapCards = [
+      { name: "relay", opcode: OP.RELAY, fields: [{ key: "addr", label: "addr", value: "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/12D3KooWExample" }], payload: (fields) => textBytes(fieldValue(fields, "addr")) },
+      { name: "dial", opcode: OP.DIAL, fields: [{ key: "addr", label: "addr", value: "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/12D3KooWExample" }], payload: (fields) => textBytes(fieldValue(fields, "addr")) },
+      { name: "sub", opcode: OP.SUB, fields: [{ key: "topic", label: "topic", value: "diarsaba-demo" }], payload: (fields) => textBytes(fieldValue(fields, "topic")) },
+      { name: "use", opcode: OP.USE, fields: [{ key: "topic", label: "topic", value: "diarsaba-demo" }], payload: (fields) => textBytes(fieldValue(fields, "topic")) },
+      { name: "pub", opcode: OP.PUB, fields: [{ key: "topic", label: "topic", value: "diarsaba-demo" }, { key: "message", label: "message", value: "hola desde cards" }], payload: (fields) => textBytes(fieldValue(fields, "topic") + "|" + fieldValue(fields, "message")) },
+      { name: "peers", opcode: OP.PEERS, fields: [], payload: () => new Uint8Array(0) },
+      { name: "unsub", opcode: OP.UNSUB, fields: [{ key: "topic", label: "topic", value: "diarsaba-demo" }], payload: (fields) => textBytes(fieldValue(fields, "topic")) },
+      { name: "announce", opcode: OP.ANNOUNCE, fields: [{ key: "cid", label: "cid", value: "bafkreifn22l3dvpyz7s4bzsbkacirpw2qxhfdid22n6r3qrygciuztwpom" }], payload: (fields) => textBytes(fieldValue(fields, "cid")) },
+      { name: "unannounce", opcode: OP.UNANNOUNCE, fields: [{ key: "cid", label: "cid", value: "bafkreifn22l3dvpyz7s4bzsbkacirpw2qxhfdid22n6r3qrygciuztwpom" }], payload: (fields) => textBytes(fieldValue(fields, "cid")) },
+      { name: "find providers", opcode: OP.FIND_PROVIDERS, fields: [{ key: "cid", label: "cid", value: "bafkreifn22l3dvpyz7s4bzsbkacirpw2qxhfdid22n6r3qrygciuztwpom" }], payload: (fields) => textBytes(fieldValue(fields, "cid")) },
+      { name: "direct msg", opcode: OP.DIRECT_MSG, fields: [{ key: "peer", label: "peer id", value: "12D3KooWExample" }, { key: "data", label: "data", value: "hola directo" }], payload: (fields) => { const peer = textBytes(fieldValue(fields, "peer")); const data = textBytes(fieldValue(fields, "data")); return concat(u16(peer.length), peer, data); } },
+      { name: "disconnect", opcode: OP.DISCONNECT, fields: [{ key: "peer", label: "peer id", value: "12D3KooWExample" }], payload: (fields) => textBytes(fieldValue(fields, "peer")) },
+      { name: "generate cid", opcode: OP.GENERATE_CID, fields: [{ key: "data", label: "data", value: "contenido de ejemplo" }], payload: (fields) => textBytes(fieldValue(fields, "data")) }
+    ];
+
+    const samsaraCards = [
+      { name: "create db", opcode: OP.CREATE_DB, fields: [{ key: "db", label: "db", value: "diarsaba" }, { key: "secret", label: "secret", value: "origen" }, { key: "size", label: "size", value: "16" }, { key: "genome", label: "genome", value: "1023" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(db.length), u32(secret.length), u32(fieldValue(fields, "size")), u32(fieldValue(fields, "genome")), db, secret); } },
+      { name: "delete db", opcode: OP.DELETE_DB, fields: [{ key: "cell", label: "cell index", value: "0" }, { key: "db", label: "db", value: "diarsaba" }, { key: "secret", label: "secret", value: "origen" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(fieldValue(fields, "cell")), u32(db.length), u32(secret.length), db, secret); } },
+      { name: "write", opcode: OP.WRITE, fields: [{ key: "cell", label: "cell index", value: "0" }, { key: "db", label: "db", value: "diarsaba" }, { key: "key", label: "key", value: "saludo" }, { key: "value", label: "value", value: "hola samsara" }, { key: "secret", label: "secret", value: "origen" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const key = textBytes(fieldValue(fields, "key")); const value = textBytes(fieldValue(fields, "value")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(fieldValue(fields, "cell")), u32(db.length), u32(key.length), u32(value.length), u32(secret.length), db, key, value, secret); } },
+      { name: "read", opcode: OP.READ, fields: [{ key: "cell", label: "cell index", value: "0" }, { key: "db", label: "db", value: "diarsaba" }, { key: "key", label: "key", value: "saludo" }, { key: "secret", label: "secret", value: "origen" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const key = textBytes(fieldValue(fields, "key")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(fieldValue(fields, "cell")), u32(db.length), u32(key.length), u32(secret.length), db, key, secret); } },
+      { name: "read free", opcode: OP.READ_FREE, fields: [{ key: "db", label: "db", value: "diarsaba" }, { key: "key", label: "key", value: "saludo" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const key = textBytes(fieldValue(fields, "key")); return concat(u32(db.length), u32(key.length), db, key); } },
+      { name: "delete", opcode: OP.DELETE, fields: [{ key: "cell", label: "cell index", value: "0" }, { key: "db", label: "db", value: "diarsaba" }, { key: "key", label: "key", value: "saludo" }, { key: "secret", label: "secret", value: "origen" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const key = textBytes(fieldValue(fields, "key")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(fieldValue(fields, "cell")), u32(db.length), u32(key.length), u32(secret.length), db, key, secret); } },
+      { name: "read cell", opcode: OP.READ_CELL, fields: [{ key: "cell", label: "cell index", value: "0" }, { key: "db", label: "db", value: "diarsaba" }, { key: "secret", label: "secret", value: "origen" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const secret = textBytes(fieldValue(fields, "secret")); return concat(u32(fieldValue(fields, "cell")), u32(db.length), u32(secret.length), db, secret); } },
+      { name: "diferir", opcode: OP.DIFERIR, fields: [{ key: "db", label: "db", value: "diarsaba" }, { key: "cell", label: "cell index", value: "0" }, { key: "secret", label: "parent secret", value: "origen" }, { key: "genome", label: "child genome", value: "64" }, { key: "x", label: "x", value: "0" }, { key: "y", label: "y", value: "0" }, { key: "z", label: "z", value: "0" }, { key: "child", label: "child secret", value: "hijo" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const secret = textBytes(fieldValue(fields, "secret")); const child = textBytes(fieldValue(fields, "child")); return concat(u32(db.length), u32(fieldValue(fields, "cell")), u32(secret.length), u32(fieldValue(fields, "genome")), u32(fieldValue(fields, "x")), u32(fieldValue(fields, "y")), u32(fieldValue(fields, "z")), randomBytes(16), u32(child.length), db, secret, child); } },
+      { name: "cruzar", opcode: OP.CRUZAR, fields: [{ key: "db", label: "db", value: "diarsaba" }, { key: "cellA", label: "cell a", value: "0" }, { key: "cellB", label: "cell b", value: "1" }, { key: "secretA", label: "secret a", value: "origen" }, { key: "secretB", label: "secret b", value: "vecino" }, { key: "x", label: "x", value: "0" }, { key: "y", label: "y", value: "0" }, { key: "z", label: "z", value: "0" }, { key: "child", label: "child secret", value: "cruzado" }], payload: (fields) => { const db = textBytes(fieldValue(fields, "db")); const secretA = textBytes(fieldValue(fields, "secretA")); const secretB = textBytes(fieldValue(fields, "secretB")); const child = textBytes(fieldValue(fields, "child")); return concat(u32(db.length), u32(fieldValue(fields, "cellA")), u32(fieldValue(fields, "cellB")), u32(secretA.length), u32(secretB.length), u32(fieldValue(fields, "x")), u32(fieldValue(fields, "y")), u32(fieldValue(fields, "z")), u32(child.length), db, secretA, secretB, child); } }
+    ];
+
+    for (const card of synapCards) {
+      buildCard(synapGrid, card);
+    }
+
+    for (const card of samsaraCards) {
+      buildCard(samsaraGrid, card);
+    }
+
+    document.getElementById("clear-log").addEventListener("click", () => {
+      entries.innerHTML = "";
+    });
+
+    connectSocket();
+  </script>
+</body>
+</html>

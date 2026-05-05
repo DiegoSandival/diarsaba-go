@@ -1,13 +1,18 @@
-module diarsaba-go
+module github.com/DiegoSandival/diarsaba-go
 
 go 1.26.2
+
+require (
+	github.com/DiegoSandival/samsara-go v0.0.0
+	github.com/DiegoSandival/synap2p-go v0.0.0
+	github.com/gorilla/websocket v1.5.3
+	go.yaml.in/yaml/v2 v2.4.4
+)
 
 require (
 	filippo.io/bigmod v0.1.1-0.20260103110540-f8a47775ebe5 // indirect
 	filippo.io/keygen v0.0.0-20260114151900-8e2790ea4c5b // indirect
 	github.com/DiegoSandival/ouroboros-go v0.0.0-20260428210223-de4195b27282 // indirect
-	github.com/DiegoSandival/samsara-go v0.0.0-20260428230938-be64642ef8f7 // indirect
-	github.com/DiegoSandival/synap2p-go v0.0.0-20260429230411-0ae7e17bc17c // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -21,7 +26,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
@@ -106,7 +110,6 @@ require (
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90 // indirect
 	golang.org/x/mod v0.34.0 // indirect
@@ -121,3 +124,7 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
+
+replace github.com/DiegoSandival/samsara-go => ../samsara-go
+
+replace github.com/DiegoSandival/synap2p-go => ../synap2p-go

@@ -1,0 +1,16 @@
+mode: client
+listen_addr: "127.0.0.1:18080"
+index_path: "./cards/index.html"
+ws_path: "/ws"
+request_timeout: "10s"
+
+synap2p:
+  listen_port: 0
+  bootstrap_list: []
+  namespace: "_diarsaba_relays"
+  data_dir: "./data/client-synap2p"
+  app_id: "diarsaba"
+  protocol_prefix: "/diarsaba"
+
+samsara:
+  db_path: "./data/samsara"

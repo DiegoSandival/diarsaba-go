@@ -1,0 +1,16 @@
+[Unit]
+Description=Diarsaba Server Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/local/bin
+ExecStart=/usr/local/bin/diarsaba /usr/local/bin/config.server.production.yaml
+Restart=always
+RestartSec=3
+Environment=DIARSABA_LOG_ENABLED=true
+
+[Install]
+WantedBy=multi-user.target

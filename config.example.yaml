@@ -1,0 +1,21 @@
+mode: server
+listen_addr: ":8080"
+public_host: "diarsaba.com"
+api_host: "api.diarsaba.com"
+index_path: "./cards/index.html"
+ws_path: "/ws"
+request_timeout: "10s"
+
+synap2p:
+  listen_port: 4001
+  listen_addrs:
+    - "/ip4/0.0.0.0/udp/4001/quic-v1"
+    - "/ip6/::/udp/4001/quic-v1"
+  bootstrap_list: []
+  namespace: "_diarsaba_relays"
+  data_dir: "./data/synap2p"
+  app_id: "diarsaba"
+  protocol_prefix: "/diarsaba"
+
+samsara:
+  db_path: "./data/samsara"
