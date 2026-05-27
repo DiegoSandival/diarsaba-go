@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -29,6 +30,7 @@ type App struct {
 	samsaraParser *samsaraProtocol.ProtocolParser
 	samsara       *samsara.CentralHandler
 	indexHTML     []byte
+	staticDir     string
 	httpServer    *http.Server
 }
 
@@ -50,6 +52,7 @@ func NewApp(cfg resolvedConfig) (*App, error) {
 		samsaraParser: &samsaraProtocol.ProtocolParser{},
 		samsara:       samsara.NewCentralHandlerWithDBPath(cfg.samsaraDBPath),
 		indexHTML:     indexHTML,
+		staticDir:     filepath.Dir(cfg.indexPath),
 	}
 
 	app.httpServer = &http.Server{
@@ -173,11 +176,7 @@ func (a *App) handlePublicRead(w http.ResponseWriter, r *http.Request) {
 func (a *App) handleServerAPI(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if r.URL.Path != "/" && r.URL.Path != "/index.html" {
-			http.NotFound(w, r)
-			return
-		}
-		a.serveIndex(w)
+		a.serveStaticOrIndex(w, r)
 	case http.MethodPost:
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -196,7 +195,28 @@ func (a *App) handleClientHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	a.serveIndex(w)
+	a.serveStaticOrIndex(w, r)
+}
+
+func (a *App) serveStaticOrIndex(w http.ResponseWriter, r *http.Request) {
+	// Always serve index for root
+	if r.URL.Path == "/" || r.URL.Path == "" || r.URL.Path == "/index.html" {
+		a.serveIndex(w)
+		return
+	}
+
+	// Clean requested path and map to staticDir
+	cleanPath := filepath.Clean(strings.TrimPrefix(r.URL.Path, "/"))
+	fsPath := filepath.Join(a.staticDir, cleanPath)
+
+	info, err := os.Stat(fsPath)
+	if err != nil || info.IsDir() {
+		// Fallback to index (SPA behavior) if not found
+		a.serveIndex(w)
+		return
+	}
+
+	http.ServeFile(w, r, fsPath)
 }
 
 func (a *App) handleBinaryHTTP(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,30 @@
+mode: client
+
+# HTTP local para servir la UI del nodo en la maquina del usuario.
+listen_addr: "127.0.0.1:8080"
+
+# La UI y el WebSocket viven en el mismo proceso local.
+index_path: "./cards/index.html"
+ws_path: "/ws"
+
+# Tiempo maximo para esperar respuestas internas del motor Synap2P.
+request_timeout: "15s"
+
+logging:
+  enabled: false
+
+synap2p:
+  # Puerto QUIC del nodo cliente. Puede ajustarse si hace falta fijarlo.
+  listen_port: 7001
+  listen_addrs:
+    - "/ip4/0.0.0.0/udp/7001/quic-v1"
+    - "/ip6/::/udp/7001/quic-v1"
+  bootstrap_list: []
+  namespace: "_diarsaba_relays"
+  data_dir: "./data/client-synap2p"
+  key_path: "diarsaba_client.key"
+  app_id: "diarsaba"
+  protocol_prefix: "/diarsaba"
+
+samsara:
+  db_path: "./data/samsara"
