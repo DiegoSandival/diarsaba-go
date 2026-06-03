@@ -1,6 +1,7 @@
 package main
 
 import (
+	luviaProtocol "github.com/DiegoSandival/lluvia/protocol"
 	samsaraProtocol "github.com/DiegoSandival/samsara-go/protocol"
 	quicnet "github.com/DiegoSandival/synap2p-go"
 )
@@ -11,6 +12,7 @@ const (
 	dispatchTargetUnknown dispatchTarget = iota
 	dispatchTargetSynap
 	dispatchTargetSamsara
+	dispatchTargetLluvia
 )
 
 func (t dispatchTarget) String() string {
@@ -19,6 +21,8 @@ func (t dispatchTarget) String() string {
 		return "synap2p"
 	case dispatchTargetSamsara:
 		return "samsara"
+	case dispatchTargetLluvia:
+		return "lluvia"
 	default:
 		return "unknown"
 	}
@@ -34,6 +38,8 @@ func classifyFrame(frame []byte) (dispatchTarget, byte, []byte, []byte) {
 	switch {
 	case opcode >= quicnet.OpcodeRequestMin && opcode <= quicnet.OpcodeRequestMax:
 		return dispatchTargetSynap, opcode, requestID, nil
+	case opcode >= luviaProtocol.OpcodeNamespaceMin && opcode <= luviaProtocol.OpcodeNamespaceMax:
+		return dispatchTargetLluvia, opcode, requestID, nil
 	case opcode >= samsaraProtocol.OpcodeNamespaceMin && opcode <= samsaraProtocol.OpcodeNamespaceMax:
 		return dispatchTargetSamsara, opcode, requestID, nil
 	default:

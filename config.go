@@ -37,6 +37,7 @@ type Config struct {
 	Logging        LoggingConfig  `json:"logging,omitempty" yaml:"logging,omitempty"`
 	Synap2P        quicnet.Config `json:"synap2p" yaml:"synap2p"`
 	Samsara        SamsaraConfig  `json:"samsara" yaml:"samsara"`
+	Lluvia         LluviaConfig   `json:"lluvia,omitempty" yaml:"lluvia,omitempty"`
 }
 
 type LoggingConfig struct {
@@ -45,6 +46,9 @@ type LoggingConfig struct {
 
 type SamsaraConfig struct {
 	DBPath string `json:"db_path,omitempty" yaml:"db_path,omitempty"`
+}
+
+type LluviaConfig struct {
 }
 
 type resolvedConfig struct {

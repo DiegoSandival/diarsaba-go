@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	lluvia "github.com/DiegoSandival/lluvia/handler"
+	luviaProtocol "github.com/DiegoSandival/lluvia/protocol"
 	samsara "github.com/DiegoSandival/samsara-go/handler"
 	samsaraProtocol "github.com/DiegoSandival/samsara-go/protocol"
 	quicnet "github.com/DiegoSandival/synap2p-go"
@@ -29,6 +31,8 @@ type App struct {
 	synap         *synapBridge
 	samsaraParser *samsaraProtocol.ProtocolParser
 	samsara       *samsara.CentralHandler
+	luviaParser   *luviaProtocol.ProtocolParser
+	lluvia        *lluvia.CentralHandler
 	indexHTML     []byte
 	staticDir     string
 	httpServer    *http.Server
@@ -51,6 +55,8 @@ func NewApp(cfg resolvedConfig) (*App, error) {
 		synap:         newSynapBridge(node, cfg.requestTimeout),
 		samsaraParser: &samsaraProtocol.ProtocolParser{},
 		samsara:       samsara.NewCentralHandlerWithDBPath(cfg.samsaraDBPath),
+		luviaParser:   luviaProtocol.NewProtocolParser(),
+		lluvia:        lluvia.NewCentralHandler(),
 		indexHTML:     indexHTML,
 		staticDir:     filepath.Dir(cfg.indexPath),
 	}
@@ -247,6 +253,8 @@ func (a *App) dispatchHTTP(frame []byte) []byte {
 		return samsara.ProcessRequest(frame, a.samsaraParser, a.samsara)
 	case dispatchTargetSynap:
 		return a.synap.Request(frame)
+	case dispatchTargetLluvia:
+		return lluvia.ProcessRequest(frame, a.luviaParser, a.lluvia)
 	default:
 		return errorResult(requestIDFromFrame(frame), ErrorCodeUnknownOpcode, "dispatcher.unknown_opcode")
 	}
@@ -265,6 +273,8 @@ func (a *App) dispatchWebSocket(session *wsSession, frame []byte) []byte {
 		return samsara.ProcessRequest(frame, a.samsaraParser, a.samsara)
 	case dispatchTargetSynap:
 		return a.synap.DispatchToSession(session, frame)
+	case dispatchTargetLluvia:
+		return lluvia.ProcessRequest(frame, a.luviaParser, a.lluvia)
 	default:
 		return errorResult(requestIDFromFrame(frame), ErrorCodeUnknownOpcode, "dispatcher.unknown_opcode")
 	}
