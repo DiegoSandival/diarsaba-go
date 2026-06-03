@@ -1,0 +1,34 @@
+mode: server
+
+# HTTP publico del binario unico.
+listen_addr: ":8080"
+
+# Enrutamiento por Host en modo server.
+public_host: "diarsaba.com"
+api_host: "api.diarsaba.com"
+
+# UI unica servida por el mismo binario.
+index_path: "./cards/index.html"
+ws_path: "/ws"
+
+# Tiempo maximo para esperar respuestas internas de Synap2P.
+request_timeout: "15s"
+
+logging:
+  enabled: true
+
+synap2p:
+  # QUIC publico para relay/backbone.
+  listen_port: 4001
+  listen_addrs:
+    - "/ip4/0.0.0.0/udp/4001/quic-v1"
+    - "/ip6/::/udp/4001/quic-v1"
+  bootstrap_list: []
+  namespace: "_diarsaba_relays"
+  data_dir: "./data/server-synap2p"
+  key_path: "diarsaba_server.key"
+  app_id: "diarsaba"
+  protocol_prefix: "/diarsaba"
+
+samsara:
+  db_path: "./data/samsara"
