@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/browser"
+
 	lluvia "github.com/DiegoSandival/lluvia/handler"
 	luviaProtocol "github.com/DiegoSandival/lluvia/protocol"
 	samsara "github.com/DiegoSandival/samsara-go/handler"
@@ -88,6 +90,18 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}()
 
+	if a.cfg.mode == ModeClient {
+		// Pequeña pausa para asegurar que el servidor esté listo
+		time.Sleep(500 * time.Millisecond)
+		url := fmt.Sprintf("http://%s", a.cfg.listenAddr)
+		a.logf("attempting to open browser at %s", url)
+		if err := browser.OpenURL(url); err != nil {
+			// Si falla, solo muestra un log, la app sigue funcionando
+			a.logf("failed to open browser automatically: %v", err)
+		} else {
+			a.logf("browser opened successfully")
+		}
+	}
 	select {
 	case err := <-errCh:
 		_ = a.node.Close()
